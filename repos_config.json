@@ -1,0 +1,33 @@
+[
+  {
+    "nome": "projeto-a",
+    "repo": "https://github.com/seuuser/projeto-a.git",
+    "grupos_de_testes": [
+      "unit",
+      "integration",
+      "smoke",
+      "api",
+      "funcional"
+    ],
+    "docker_por_grupo": 5,
+    "imagem": "gvenzl/oracle-xe",
+    "caminho": "",
+    "comandos_por_container": []
+  },
+  {
+    "nome": "projeto-b",
+    "repo": "https://github.com/seuuser/projeto-b.git",
+    "grupos_de_testes": [
+      "sanity",
+      "regression"
+    ],
+    "docker_por_grupo": 2,
+    "imagem": "gvenzl/oracle-xe",
+    "caminho": "",
+    "comandos_por_container": [
+      [
+        "teste"
+      ]
+    ]
+  }
+]
