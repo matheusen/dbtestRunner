@@ -70,7 +70,7 @@ def preparar_ambiente(repo):
 def executar_grupos_de_testes(repo, caminho_local, comandos_para_rodar):
     return rodar_comando_maven_cmd(caminho_local, comandos_para_rodar)
 
-def executar_teste_por_repositorio(repo):
+def executar_teste_por_repositorio(repo, log_fn=print):
     nome = repo["nome"]
     caminho_local = repo["caminho"]
     grupos = repo["grupos_de_testes"]
@@ -86,7 +86,7 @@ def executar_teste_por_repositorio(repo):
     comandos_para_rodar = []
 
     for grupo in grupos:
-        comandos_para_rodar.append(["test", f"-Dgroups={grupo}"])
+        comandos_para_rodar.append(["test", f"-P{grupo}"])
         grupos_rodados += 1
 
         if grupos_rodados % max_por_container == 0 or grupo == grupos[-1]:
