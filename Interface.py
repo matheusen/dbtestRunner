@@ -4,6 +4,7 @@ import threading
 import tkinter as tk
 from tkinter import ttk, messagebox
 from dbtestRunner import executar_teste_por_repositorio, preparar_ambiente, carregar_config
+from utils import converter_html_para_pdf  
 
 CONFIG_PATH = "repos_config.json"
 
@@ -99,12 +100,16 @@ class DBTestRunnerUI:
 
             run_button = ttk.Button(frame, text="▶️ Rodar DBTestes", command=lambda r=repo: self.executar_testes_thread(r))
             run_button.pack(pady=5)
+            # Área de log por repositório
+            log_area = tk.Text(frame, height=10, wrap="word", state="disabled", bg="#f5f5f5")
+            log_area.pack(fill=tk.BOTH, pady=5)
 
             self.repo_frames.append({
                 "repo": repo,
                 "caminho_var": caminho_var,
                 "imagem_var": imagem_var,
-                "cmd_vars": container_entries
+                "cmd_vars": container_entries,
+                "log_widget": log_area  # adiciona log na estrutura
             })
 
     def salvar_configuracoes(self):
@@ -125,12 +130,30 @@ class DBTestRunnerUI:
 
     def executar_teste(self, repo):
         nome = repo["nome"]
-        print(f"\n🚀 Iniciando testes para {nome}")
+        log_widget = next((f["log_widget"] for f in self.repo_frames if f["repo"] == repo), None)
+
+        def log(msg):
+            if log_widget:
+                log_widget.configure(state='normal')
+                log_widget.insert(tk.END, msg + '\n')
+                log_widget.see(tk.END)
+                log_widget.configure(state='disabled')
+            print(msg)
+
+        log(f"\n🚀 Iniciando testes para {nome}")
         try:
-            executar_teste_por_repositorio(repo)
-            print(f"✅ Testes finalizados para {nome}")
+            executar_teste_por_repositorio(repo, log_fn=log)
+            log(f"✅ Testes finalizados para {nome}")
+
+            report_path = os.path.join(repo["caminho"], "target", "surefire-reports", "index.html")
+            if os.path.exists(report_path):
+                pdf_path = os.path.join("relatorios_pdf", f"{nome}_resultado.pdf")
+                converter_html_para_pdf(report_path, pdf_path)
+                log(f"📄 Relatório convertido para PDF: {pdf_path}")
+            else:
+                log("⚠️ Relatório HTML não encontrado após execução dos testes.")
         except Exception as e:
-            print(f"❌ Erro ao executar testes para {nome}: {e}")
+            log(f"❌ Erro ao executar testes para {nome}: {e}")
 
 
 if __name__ == "__main__":

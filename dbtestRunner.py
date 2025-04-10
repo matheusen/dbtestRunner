@@ -3,7 +3,8 @@ import os
 import time
 import subprocess
 from random import randint
-
+import re
+from utils import converter_html_para_pdf
 from connectOracle import run_oracle_update
 from execDockerCommands import stop_and_create_container, aguardar_container_healthy
 
@@ -21,12 +22,34 @@ def rodar_comando_maven_cmd(caminho_projeto, comandos):
             print("[OUTPUT]", resultado.stdout)
             if resultado.returncode != 0:
                 print("[ERRO]", resultado.stderr)
-                return False
+
+            # Após o comando, verificar se HTML existe e converter
+            report_path = os.path.join(caminho_projeto, "target", "surefire-reports", "index.html")
+            if os.path.exists(report_path):
+                safe_name = '_'.join(comando).replace("=", "-").replace(" ", "_")
+                status = analisar_html_teste(report_path)
+                pdf_path = os.path.join("relatorios_pdf", f"{safe_name}_{status}.pdf")
+                converter_html_para_pdf(report_path, pdf_path)
+                print(f"📄 Relatório convertido para PDF: {pdf_path} ({status})")
+            else:
+                print("⚠️ Relatório HTML não encontrado após comando Maven.")
+
         except Exception as e:
             print(f"[ERRO EXECUCAO CMD] {e}")
             return False
 
     return True
+
+def analisar_html_teste(caminho_html):
+    try:
+        with open(caminho_html, encoding="utf-8") as f:
+            conteudo = f.read()
+            if re.search(r"Tests run: \d+, Failures: 0, Errors: 0", conteudo):
+                return "SUCESSO"
+            return "FALHA"
+    except Exception as e:
+        print(f"[ERRO] Ao analisar HTML: {e}")
+        return "ERRO"
 
 def preparar_ambiente(repo):
     nome = repo["nome"]
